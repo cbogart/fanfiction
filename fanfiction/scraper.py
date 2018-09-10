@@ -13,7 +13,7 @@ class Scraper:
     def __init__(self, rate_limit=1):
         self.base_url = 'http://fanfiction.net'
         self.rate_limit = rate_limit
-        self.parser = "html.parser"
+        self.parser = "lxml" #"html.parser"
 
     def get_genres(self, genre_text):
         genres = genre_text.split('/')
