@@ -21,12 +21,19 @@ def load_story_ids(fpath):
 
 def save_stories(scraper, ids, out_dirpath, restart=None):
 
-    metadata_out_fpath = os.path.join(out_dirpath, 'metadata.csv')
-    columns = ["id", "canon_type", 'canon', 'author_id', 'title', 'updated', 'published', 'lang', 'genres', 'num_reviews', 'num_favs', 'num_follows', 'num_words', 'rated', 'num_chapters', 'chapter_names']
+    metadata_out_fpath = os.path.join(out_dirpath, 'stories.csv')
+    chmetadata_out_fpath = os.path.join(out_dirpath, 'chapters.csv')
+    storycolumns = "fic_id,title,author,author_key,description,rating,canon_type,fandom,relationship,character,language,published,status,updated,num_words,num_reviews,num_favs,num_follows,chapter_count".split(",")
+    chaptercolumns = "fic_id,title,chapter_num,chapter_title,paragraph_count".split(",")
+    #columns = ["id", "canon_type", 'canon', 'author_id', 'title', 'updated', 'published', 'lang', 'genres', 'num_reviews', 'num_favs', 'num_follows', 'num_words', 'rated', 'num_chapters', 'chapter_names', 'characters']
     if not os.path.exists(metadata_out_fpath):
         with open(metadata_out_fpath, 'w') as f:
             w = csv.writer(f)
-            w.writerow(columns)
+            w.writerow(storycolumns)
+    if not os.path.exists(chmetadata_out_fpath):
+        with open(chmetadata_out_fpath, 'w') as f:
+            chw = csv.writer(f)
+            chw.writerow(chaptercolumns)
 
     story_out_dirpath = os.path.join(out_dirpath, 'stories')
     if not os.path.exists(story_out_dirpath):
@@ -53,16 +60,18 @@ def save_stories(scraper, ids, out_dirpath, restart=None):
         # Save metadata
         with open(metadata_out_fpath, 'a') as f:
             w = csv.writer(f)
-            w.writerow([story_metadata.get(col, '') for col in columns])
+            w.writerow([story_metadata.get(col, '') for col in storycolumns])
 
         # Save story
-        for c, story in story_metadata['chapters'].items():
-            story_out_fpath = os.path.join(story_out_dirpath, "{}_{}.txt".format(story_metadata['id'], str(c).zfill(4)))
-            with open(story_out_fpath, 'w') as f:
-                if not isinstance(story, bytes):
-                    pdb.set_trace()
-                else:
-                    f.write(str(story, 'utf-8') + '\n\n')
+        with open(chmetadata_out_fpath, 'a') as f:
+            chw = csv.writer(f)
+            for (chn, (c, story)) in enumerate(story_metadata['chapters'].items()):
+                story_out_fpath = os.path.join(story_out_dirpath, "{}_{}.csv".format(story_metadata['fic_id'], str(c).zfill(4)))
+                chw.writerow([story_metadata["fic_id"], story_metadata["title"], chn+1, story_metadata['chapter_names'][chn], len(story)])
+                f2 = csv.writer(open(story_out_fpath, 'w')) 
+                f2.writerow(["fic_id","chapter_id","para_id","text"])
+                for (pn, para) in enumerate(story):
+                    f2.writerow([story_metadata["fic_id"],chn+1,pn,para])
 
 
 def main():
